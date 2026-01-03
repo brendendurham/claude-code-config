@@ -1,0 +1,71 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p \"$HOME/.claude/logs\" && echo \"[$(date -Iseconds)] SESSION_START pid=$$ cwd=$PWD\" >> \"$HOME/.claude/logs/audit.log\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qiE '(api[_-]?key|password|secret|token|credential)\\s*[=:]\\s*[\"'\\'''][^\"'\\'']+[\"'\\''']'; then echo 'BLOCKED: Hardcoded credential' >&2; exit 1; fi; mkdir -p \"$HOME/.claude/logs\" && echo \"[$(date -Iseconds)] PRE Write|Edit ALLOWED\" >> \"$HOME/.claude/logs/audit.log\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE '(rm\\s+-rf\\s+/|> /dev/sda|mkfs\\.)'; then echo 'BLOCKED: Dangerous command' >&2; exit 1; fi; mkdir -p \"$HOME/.claude/logs\" && echo \"[$(date -Iseconds)] PRE Bash ALLOWED\" >> \"$HOME/.claude/logs/audit.log\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p \"$HOME/.claude/logs\" && echo \"[$(date -Iseconds)] POST tool=$CLAUDE_TOOL_NAME exit=${CLAUDE_TOOL_EXIT_CODE:-0}\" >> \"$HOME/.claude/logs/audit.log\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p \"$HOME/.claude/logs\" && echo \"[$(date -Iseconds)] SUBAGENT_STOP\" >> \"$HOME/.claude/logs/audit.log\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p \"$HOME/.claude/logs\" && echo \"[$(date -Iseconds)] SESSION_STOP\" >> \"$HOME/.claude/logs/audit.log\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Claude Code Configuration Setup Script
-# Creates symlinks from ~/.claude to this repository
+# Creates symlinks and installs hooks configuration
 
 set -e
 
@@ -16,94 +16,74 @@ echo "Repository: $SCRIPT_DIR"
 echo "Target: $CLAUDE_DIR"
 echo ""
 
-# Check if ~/.claude exists
-if [ -d "$CLAUDE_DIR" ]; then
-    echo "Existing ~/.claude directory found."
-    echo ""
-
-    # Check if already symlinked
-    if [ -L "$CLAUDE_DIR/agents" ] && [ "$(readlink "$CLAUDE_DIR/agents")" = "$SCRIPT_DIR/agents" ]; then
-        echo "Already configured. Updating symlinks..."
-    else
-        echo "Creating backup at: $BACKUP_DIR"
-        mkdir -p "$BACKUP_DIR"
-
-        # Backup existing directories that we'll replace
-        for dir in agents skills hooks commands doc-intelligence; do
-            if [ -d "$CLAUDE_DIR/$dir" ] && [ ! -L "$CLAUDE_DIR/$dir" ]; then
-                echo "  Backing up $dir..."
-                cp -r "$CLAUDE_DIR/$dir" "$BACKUP_DIR/" 2>/dev/null || true
-            fi
-        done
-
-        # Backup CLAUDE.md if it exists and isn't a symlink
-        if [ -f "$CLAUDE_DIR/CLAUDE.md" ] && [ ! -L "$CLAUDE_DIR/CLAUDE.md" ]; then
-            echo "  Backing up CLAUDE.md..."
-            cp "$CLAUDE_DIR/CLAUDE.md" "$BACKUP_DIR/" 2>/dev/null || true
-        fi
-
-        echo "Backup complete."
-    fi
-else
-    echo "Creating ~/.claude directory..."
-    mkdir -p "$CLAUDE_DIR"
-fi
-
-echo ""
-echo "Creating symlinks..."
+# Create ~/.claude if needed
+mkdir -p "$CLAUDE_DIR"
+mkdir -p "$CLAUDE_DIR/logs"
 
 # Function to create symlink
 create_symlink() {
     local source="$1"
     local target="$2"
 
-    # Remove existing file/directory/symlink
-    if [ -e "$target" ] || [ -L "$target" ]; then
-        rm -rf "$target"
+    if [ ! -e "$source" ]; then
+        echo "  SKIP: $source does not exist"
+        return
     fi
+
+    # Backup if exists and not a symlink
+    if [ -e "$target" ] && [ ! -L "$target" ]; then
+        mkdir -p "$BACKUP_DIR"
+        echo "  Backing up: $target"
+        cp -r "$target" "$BACKUP_DIR/" 2>/dev/null || true
+    fi
+
+    # Remove existing
+    rm -rf "$target" 2>/dev/null || true
 
     # Create symlink
     ln -s "$source" "$target"
     echo "  $target -> $source"
 }
 
-# Create symlinks for directories
+echo "Creating symlinks..."
+
+# Create symlinks for versioned content
 create_symlink "$SCRIPT_DIR/agents" "$CLAUDE_DIR/agents"
 create_symlink "$SCRIPT_DIR/skills" "$CLAUDE_DIR/skills"
-create_symlink "$SCRIPT_DIR/hooks" "$CLAUDE_DIR/hooks"
 create_symlink "$SCRIPT_DIR/commands" "$CLAUDE_DIR/commands"
 create_symlink "$SCRIPT_DIR/doc-intelligence" "$CLAUDE_DIR/doc-intelligence"
-
-# Create symlink for CLAUDE.md
 create_symlink "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 
 echo ""
-echo "Making hook scripts executable..."
-chmod +x "$SCRIPT_DIR/hooks/scripts/"*.sh 2>/dev/null || true
+echo "Installing hooks configuration..."
+
+# Install settings.json (hooks) - copy, don't symlink (user may customize)
+if [ ! -f "$CLAUDE_DIR/settings.json" ]; then
+    if [ -f "$SCRIPT_DIR/settings.json.template" ]; then
+        cp "$SCRIPT_DIR/settings.json.template" "$CLAUDE_DIR/settings.json"
+        echo "  Created: $CLAUDE_DIR/settings.json"
+    fi
+else
+    echo "  EXISTS: $CLAUDE_DIR/settings.json (not overwriting)"
+fi
 
 echo ""
 echo "==================================="
 echo "Setup Complete!"
 echo "==================================="
 echo ""
-echo "Next steps:"
+
+# Run verification
+if [ -x "$SCRIPT_DIR/verify.sh" ]; then
+    echo "Running verification..."
+    echo ""
+    "$SCRIPT_DIR/verify.sh"
+fi
+
 echo ""
-echo "1. Configure MCP servers (optional):"
-echo "   cp $SCRIPT_DIR/mcp/mcp.json.template ~/.claude/.mcp.json"
-echo "   # Then edit ~/.claude/.mcp.json with your settings"
-echo ""
-echo "2. Set environment variables in ~/.zshrc or ~/.bashrc:"
-echo "   export GITHUB_PERSONAL_ACCESS_TOKEN=\"your-token\""
-echo "   export POSTGRES_URL=\"postgresql://user:pass@localhost:5432/db\""
-echo ""
-echo "3. Verify installation:"
-echo "   ls -la ~/.claude/"
+echo "NOTE: Hooks take effect on NEXT session start."
 echo ""
 
 if [ -d "$BACKUP_DIR" ] && [ "$(ls -A "$BACKUP_DIR" 2>/dev/null)" ]; then
-    echo "Note: Your original configuration was backed up to:"
-    echo "  $BACKUP_DIR"
-    echo ""
+    echo "Backup created at: $BACKUP_DIR"
 fi
-
-echo "For more information, see README.md"

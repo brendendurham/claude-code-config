@@ -1,129 +1,123 @@
 # Claude Code Configuration
 
-Versioned configuration for Claude Code following official documentation patterns. Provides agents, skills, hooks, and commands for multi-agent orchestration.
+Test-driven, verified configuration for Claude Code. All hooks are tested and logged.
 
-## Repository Structure
+## Architecture
 
 ```
-claude-code-config/
-├── CLAUDE.md                 # Global Claude Code instructions
-├── setup.sh                  # Symlink setup
-│
-├── agents/                   # 19 custom agent definitions
-│   ├── orchestrator.md       # Parallel agent coordination
-│   ├── meta-orchestrator.md  # Multi-phase workflow coordination
-│   ├── edge-researcher.md    # Centralized intelligence coordinator
-│   └── ...
-│
-├── skills/                   # 6 reusable workflow skills
-│   ├── pr-review-standards/
-│   ├── commit-message-generator/
-│   └── ...
-│
-├── hooks/                    # Inline automation hooks
-│   └── hooks.json            # All hooks with inline commands
-│
+claude-code-config/           # Versioned in GitHub
+├── settings.json.template    # Hooks config (copied to ~/.claude/settings.json)
+├── verify.sh                 # Verification test suite
+├── setup.sh                  # Installation script
+├── agents/                   # 19 custom agents
+├── skills/                   # 6 workflow skills
 ├── commands/                 # Slash commands
-│   └── orchestrate.md
-│
-├── doc-intelligence/         # Documentation analysis outputs
-│   ├── section-analyses/
-│   └── sops/
-│
-└── mcp/
-    └── mcp.json.template
+└── doc-intelligence/         # Analysis outputs
+
+~/.claude/                    # Runtime location
+├── settings.json             # Hooks (from template)
+├── logs/
+│   └── audit.log             # Hook execution log
+├── agents -> repo/agents     # Symlink
+├── skills -> repo/skills     # Symlink
+├── commands -> repo/commands # Symlink
+└── CLAUDE.md -> repo/CLAUDE.md
 ```
 
-## Automation Patterns (Official)
+## Installation
 
-Following Claude Code documentation, automation uses:
-
-### 1. Inline Hook Commands
-No external scripts - commands embedded in `hooks.json`:
-```json
-{
-  "hooks": {
-    "SessionStart": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "mkdir -p ~/.claude/logs && echo SESSION >> ~/.claude/logs/sessions.log"
-      }]
-    }]
-  }
-}
+```bash
+git clone https://github.com/brendendurham/claude-code-config.git ~/claude-code-config
+cd ~/claude-code-config
+./setup.sh
 ```
 
-### 2. Background Bash Execution
-Use `run_in_background: true` for parallel tasks - no script files needed.
+Setup will:
+1. Create symlinks for agents, skills, commands
+2. Copy `settings.json.template` to `~/.claude/settings.json`
+3. Run verification tests
 
-### 3. Subagents for Parallel Work
-Launch multiple Task tools simultaneously for parallel agent execution.
+## Verification
 
-### 4. SessionStart with CLAUDE_ENV_FILE
-Set environment variables without creating files:
-```json
-{
-  "command": "if [ -n \"$CLAUDE_ENV_FILE\" ]; then echo 'export VAR=value' >> \"$CLAUDE_ENV_FILE\"; fi"
-}
+Run anytime to check configuration:
+
+```bash
+~/claude-code-config/verify.sh
+```
+
+Output:
+```
+1. settings.json exists: PASS
+2. settings.json valid JSON: PASS
+3. Hooks structure correct: PASS
+4. Audit log exists (hooks firing): PASS
+5. Agents directory: PASS (19 agents)
+6. Skills directory: PASS (6 skills)
+7. Commands directory: PASS (1 commands)
+```
+
+## Hooks (in settings.json)
+
+All hooks log to `~/.claude/logs/audit.log`:
+
+| Hook | Trigger | Action |
+|------|---------|--------|
+| `SessionStart` | Session begins | Log session start |
+| `PreToolUse` | Before Write/Edit | Block hardcoded credentials |
+| `PreToolUse` | Before Bash | Block dangerous commands |
+| `PostToolUse` | After any tool | Log tool execution |
+| `SubagentStop` | Agent completes | Log agent completion |
+| `Stop` | Session ends | Log session end |
+
+### Testing Hooks
+
+Hooks load at session start. After installing, start a NEW session and check:
+
+```bash
+cat ~/.claude/logs/audit.log
+```
+
+Should show:
+```
+[2026-01-03T15:50:00-06:00] SESSION_START pid=12345 cwd=/path
+[2026-01-03T15:50:01-06:00] PRE Bash ALLOWED
+[2026-01-03T15:50:01-06:00] POST tool=Bash exit=0
 ```
 
 ## Agents
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| `orchestrator` | opus | Coordinate parallel agent execution |
-| `meta-orchestrator` | opus | Multi-phase workflow coordination |
-| `edge-researcher` | opus | Centralized intelligence coordinator |
-| `security-auditor` | sonnet | Security vulnerability analysis |
-| `performance-profiler` | sonnet | Performance bottleneck detection |
-| `test-coverage-analyst` | sonnet | Test coverage and generation |
-| `api-contract-validator` | sonnet | API contract validation |
-| `dependency-scanner` | haiku | Fast dependency scanning |
-| `documentation-writer` | sonnet | Documentation creation |
-| `self-reviewer` | sonnet | Quality self-assessment |
-| `system-analyzer` | sonnet | System resource analysis |
-| `doc-overview` | opus | Documentation structure mapping |
-| `section-analyzer` | sonnet | Deep-dive section analysis |
-| `consolidator` | opus | Cross-section synthesis |
-| `sop-generator` | sonnet | SOP creation |
-| `prompt-engineer` | opus | Prompt optimization |
+| `orchestrator` | opus | Parallel agent coordination |
+| `meta-orchestrator` | opus | Multi-phase workflows |
+| `edge-researcher` | opus | Intelligence coordination |
+| `security-auditor` | sonnet | Security analysis |
+| `performance-profiler` | sonnet | Performance analysis |
+| `test-coverage-analyst` | sonnet | Test coverage |
+| `self-reviewer` | sonnet | Quality review |
+| + 12 more | | |
 
 ## Skills
 
 | Skill | Purpose |
 |-------|---------|
-| `pr-review-standards` | Standardized PR review |
+| `pr-review-standards` | PR review checklists |
 | `commit-message-generator` | Semantic commits |
-| `api-documentation` | API docs formatting |
+| `api-documentation` | API docs |
 | `code-explanation` | Code annotation |
 | `parallel-orchestration` | Multi-agent patterns |
-| `doc-intelligence` | Documentation analysis |
+| `doc-intelligence` | Doc analysis |
 
-## Hooks
+## Key Files
 
-All hooks use inline commands (no external scripts):
-
-| Hook | Event | Purpose |
-|------|-------|---------|
-| `PreToolUse` | Before tool | Security validation |
-| `PostToolUse` | After tool | Logging, review triggers |
-| `Stop` | Task end | Completion verification |
-| `SubagentStop` | Agent end | Quality check |
-| `SessionStart` | Session start | Environment setup |
-
-## Symlinks
-
-```
-~/.claude/agents           -> ~/claude-code-config/agents
-~/.claude/skills           -> ~/claude-code-config/skills
-~/.claude/hooks            -> ~/claude-code-config/hooks
-~/.claude/commands         -> ~/claude-code-config/commands
-~/.claude/doc-intelligence -> ~/claude-code-config/doc-intelligence
-~/.claude/CLAUDE.md        -> ~/claude-code-config/CLAUDE.md
-```
+| File | Purpose |
+|------|---------|
+| `settings.json.template` | Hooks configuration template |
+| `verify.sh` | Test suite for configuration |
+| `setup.sh` | Installation script |
+| `CLAUDE.md` | Global instructions |
 
 ---
 
-**Version:** 1.2.0
+**Version:** 2.0.0
 **License:** MIT

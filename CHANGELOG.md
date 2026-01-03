@@ -72,28 +72,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance optimization tips
 - Troubleshooting guide
 
-## [1.2.0] - 2026-01-03
+## [2.0.0] - 2026-01-03
 
 ### Changed
-- **BREAKING**: Refactored to follow official Claude Code documentation patterns
-- Removed all external script files (`scripts/` directory)
-- Converted hooks to use inline commands instead of external scripts
-- Updated hooks.json with inline security validation and logging
-
-### Removed
-- `scripts/auto-runner.sh` - Replaced by native background bash
-- `scripts/parallel-agents.sh` - Replaced by Task tool with `run_in_background`
-- `scripts/exec-and-delete.sh` - Anti-pattern removed
-- `hooks/scripts/` directory - Commands now inline in hooks.json
-
-### Documentation
-- Updated README to document official automation patterns
-- Added examples for inline hooks, background bash, and CLAUDE_ENV_FILE usage
-
-## [1.1.0] - 2026-01-03 (Deprecated)
+- **BREAKING**: Hooks now in `~/.claude/settings.json` (not hooks/hooks.json)
+- **BREAKING**: Timeouts are in seconds, not milliseconds
+- Hooks log to `~/.claude/logs/audit.log` for verification
+- `setup.sh` copies `settings.json.template` instead of symlinking
 
 ### Added
-- Scripts for autonomous execution (removed in 1.2.0)
+- `settings.json.template` - Correct hooks configuration
+- `verify.sh` - Test suite to verify configuration works
+- Audit logging for all hook executions
+
+### Removed
+- `hooks/` directory - Hooks go in settings.json per official docs
+- All external scripts - Inline commands only
+
+### Fixed
+- Hooks now actually fire (were in wrong file before)
+- Timeout format corrected (seconds not milliseconds)
 
 ## [Unreleased]
 
