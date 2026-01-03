@@ -72,17 +72,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance optimization tips
 - Troubleshooting guide
 
-## [1.1.0] - 2026-01-03
-
-### Added
-- `scripts/auto-runner.sh` - Autonomous execution with tmux parallelization
-- `scripts/parallel-agents.sh` - Background job management for parallel execution
-- `scripts/exec-and-delete.sh` - One-shot script runner for temporary scripts
-- tmux integration for parallel terminal sessions
+## [1.2.0] - 2026-01-03
 
 ### Changed
-- Updated README to remove manual instructions - all operations are autonomous
-- Simplified documentation to focus on capabilities rather than setup steps
+- **BREAKING**: Refactored to follow official Claude Code documentation patterns
+- Removed all external script files (`scripts/` directory)
+- Converted hooks to use inline commands instead of external scripts
+- Updated hooks.json with inline security validation and logging
+
+### Removed
+- `scripts/auto-runner.sh` - Replaced by native background bash
+- `scripts/parallel-agents.sh` - Replaced by Task tool with `run_in_background`
+- `scripts/exec-and-delete.sh` - Anti-pattern removed
+- `hooks/scripts/` directory - Commands now inline in hooks.json
+
+### Documentation
+- Updated README to document official automation patterns
+- Added examples for inline hooks, background bash, and CLAUDE_ENV_FILE usage
+
+## [1.1.0] - 2026-01-03 (Deprecated)
+
+### Added
+- Scripts for autonomous execution (removed in 1.2.0)
 
 ## [Unreleased]
 

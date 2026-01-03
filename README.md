@@ -1,49 +1,71 @@
 # Claude Code Configuration
 
-A comprehensive, versioned configuration repository for Claude Code. Provides agents, skills, hooks, commands, and documentation intelligence workflows for sophisticated multi-agent orchestration.
-
-**All operations are autonomous** - Claude handles setup, updates, and synchronization automatically.
+Versioned configuration for Claude Code following official documentation patterns. Provides agents, skills, hooks, and commands for multi-agent orchestration.
 
 ## Repository Structure
 
 ```
 claude-code-config/
 ├── CLAUDE.md                 # Global Claude Code instructions
-├── setup.sh                  # Auto-setup with symlinks
+├── setup.sh                  # Symlink setup
 │
 ├── agents/                   # 19 custom agent definitions
 │   ├── orchestrator.md       # Parallel agent coordination
 │   ├── meta-orchestrator.md  # Multi-phase workflow coordination
 │   ├── edge-researcher.md    # Centralized intelligence coordinator
-│   ├── security-auditor.md   # Enterprise security audit
-│   ├── performance-profiler.md   # Performance analysis
-│   ├── test-coverage-analyst.md  # Test coverage analysis
-│   └── ...                   # 13 more specialized agents
+│   └── ...
 │
 ├── skills/                   # 6 reusable workflow skills
 │   ├── pr-review-standards/
 │   ├── commit-message-generator/
-│   ├── parallel-orchestration/
 │   └── ...
 │
-├── hooks/                    # Automation hooks
-│   ├── hooks.json            # Hook configuration
-│   └── scripts/              # Validation scripts
+├── hooks/                    # Inline automation hooks
+│   └── hooks.json            # All hooks with inline commands
 │
 ├── commands/                 # Slash commands
-│   └── orchestrate.md        # /orchestrate
-│
-├── scripts/                  # Automation scripts
-│   ├── auto-runner.sh        # Autonomous execution
-│   ├── parallel-agents.sh    # Background job management
-│   └── exec-and-delete.sh    # One-shot script runner
+│   └── orchestrate.md
 │
 ├── doc-intelligence/         # Documentation analysis outputs
 │   ├── section-analyses/
 │   └── sops/
 │
-└── mcp/                      # MCP server configurations
+└── mcp/
     └── mcp.json.template
+```
+
+## Automation Patterns (Official)
+
+Following Claude Code documentation, automation uses:
+
+### 1. Inline Hook Commands
+No external scripts - commands embedded in `hooks.json`:
+```json
+{
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "*",
+      "hooks": [{
+        "type": "command",
+        "command": "mkdir -p ~/.claude/logs && echo SESSION >> ~/.claude/logs/sessions.log"
+      }]
+    }]
+  }
+}
+```
+
+### 2. Background Bash Execution
+Use `run_in_background: true` for parallel tasks - no script files needed.
+
+### 3. Subagents for Parallel Work
+Launch multiple Task tools simultaneously for parallel agent execution.
+
+### 4. SessionStart with CLAUDE_ENV_FILE
+Set environment variables without creating files:
+```json
+{
+  "command": "if [ -n \"$CLAUDE_ENV_FILE\" ]; then echo 'export VAR=value' >> \"$CLAUDE_ENV_FILE\"; fi"
+}
 ```
 
 ## Agents
@@ -71,66 +93,37 @@ claude-code-config/
 
 | Skill | Purpose |
 |-------|---------|
-| `pr-review-standards` | Standardized PR review checklists |
-| `commit-message-generator` | Semantic commit message generation |
-| `api-documentation` | API documentation formatting |
-| `code-explanation` | Code annotation and explanation |
-| `parallel-orchestration` | Multi-agent execution patterns |
-| `doc-intelligence` | Documentation analysis workflows |
+| `pr-review-standards` | Standardized PR review |
+| `commit-message-generator` | Semantic commits |
+| `api-documentation` | API docs formatting |
+| `code-explanation` | Code annotation |
+| `parallel-orchestration` | Multi-agent patterns |
+| `doc-intelligence` | Documentation analysis |
 
 ## Hooks
 
+All hooks use inline commands (no external scripts):
+
 | Hook | Event | Purpose |
 |------|-------|---------|
-| `PreToolUse` | Before tool execution | Validation, security checks |
-| `PostToolUse` | After tool execution | Security review, metrics |
-| `Stop` | Task completion | Final verification |
-| `SubagentStop` | Subagent completion | Quality validation |
-| `SessionStart` | Session start | Context loading |
+| `PreToolUse` | Before tool | Security validation |
+| `PostToolUse` | After tool | Logging, review triggers |
+| `Stop` | Task end | Completion verification |
+| `SubagentStop` | Agent end | Quality check |
+| `SessionStart` | Session start | Environment setup |
 
-## Automation Scripts
-
-### auto-runner.sh
-Autonomous execution with tmux parallelization:
-- `setup` - Full autonomous setup
-- `sync` - Sync changes to GitHub
-- `verify` - Verify installation
-- `parallel` - Run commands in parallel
-- `cleanup` - Kill tmux session
-
-### parallel-agents.sh
-Background job management:
-- `start <name> <cmd>` - Start background job
-- `wait` - Wait for all jobs
-- `status` - Show job status
-- `kill` - Kill all jobs
-
-## Symlink Architecture
+## Symlinks
 
 ```
-~/.claude/agents        -> ~/claude-code-config/agents
-~/.claude/skills        -> ~/claude-code-config/skills
-~/.claude/hooks         -> ~/claude-code-config/hooks
-~/.claude/commands      -> ~/claude-code-config/commands
+~/.claude/agents           -> ~/claude-code-config/agents
+~/.claude/skills           -> ~/claude-code-config/skills
+~/.claude/hooks            -> ~/claude-code-config/hooks
+~/.claude/commands         -> ~/claude-code-config/commands
 ~/.claude/doc-intelligence -> ~/claude-code-config/doc-intelligence
-~/.claude/CLAUDE.md     -> ~/claude-code-config/CLAUDE.md
+~/.claude/CLAUDE.md        -> ~/claude-code-config/CLAUDE.md
 ```
-
-All changes sync bidirectionally - edit in either location.
-
-## MCP Servers
-
-| Server | Purpose |
-|--------|---------|
-| `github` | GitHub API access |
-| `postgres` | PostgreSQL database |
-| `memory` | Session persistence |
-| `fetch` | HTTP requests |
-| `sequential-thinking` | Complex reasoning |
-| `git` | Git operations |
-| `filesystem` | File system access |
 
 ---
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 **License:** MIT
