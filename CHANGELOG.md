@@ -72,6 +72,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance optimization tips
 - Troubleshooting guide
 
+## [1.1.0] - 2026-01-03
+
+### Added
+- `scripts/auto-runner.sh` - Autonomous execution with tmux parallelization
+- `scripts/parallel-agents.sh` - Background job management for parallel execution
+- `scripts/exec-and-delete.sh` - One-shot script runner for temporary scripts
+- tmux integration for parallel terminal sessions
+
+### Changed
+- Updated README to remove manual instructions - all operations are autonomous
+- Simplified documentation to focus on capabilities rather than setup steps
+
 ## [Unreleased]
 
 ### Planned
