@@ -1,0 +1,54 @@
+# Claude Code runtime files
+*.log
+logs/
+
+# Session data (don't version control)
+session-env/
+shell-snapshots/
+statsig/
+todos/
+history.jsonl
+file-history/
+debug/
+
+# Plugins (managed separately)
+plugins/
+
+# Plans (temporary)
+plans/
+
+# Chrome extension data
+chrome/
+
+# Project-specific settings
+projects/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+secrets.yaml
+
+# MCP configuration with actual credentials
+.mcp.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Node modules (if any scripts use them)
+node_modules/
+
+# Backup files
+*.bak
+*.backup

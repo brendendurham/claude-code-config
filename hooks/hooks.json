@@ -1,0 +1,103 @@
+{
+  "description": "Claude CI/CD and Quality Gate Hooks - Production Event-Driven Automation",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "description": "Validate file writes - no hardcoded credentials or path traversal",
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-write.sh",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "description": "Block dangerous shell commands",
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-bash.sh",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "description": "Log all MCP tool invocations for audit trail",
+        "matcher": "mcp__*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[$(date -Iseconds)] MCP_TOOL: ${CLAUDE_TOOL_NAME} | SESSION: ${CLAUDE_SESSION_ID}\" >> \"${HOME}/.claude/hooks/logs/mcp-audit.log\"",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "description": "Security review for authentication and authorization code changes",
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "SECURITY REVIEW REQUIRED:\n\nReview the file changes for security concerns:\n1. Are there any hardcoded secrets, API keys, or passwords?\n2. Is authentication/authorization logic properly implemented?\n3. Are there any SQL injection or XSS vulnerabilities?\n4. Is input validation present and correct?\n5. Are sensitive data fields properly protected?\n\nIf auth-related code was modified, provide a brief security assessment.",
+            "timeout": 60000
+          }
+        ]
+      },
+      {
+        "description": "Log agent task execution metrics",
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[$(date -Iseconds)] TASK_COMPLETE: tool=${CLAUDE_TOOL_NAME} session=${CLAUDE_SESSION_ID} exit_code=${CLAUDE_TOOL_EXIT_CODE:-0}\" >> \"${HOME}/.claude/hooks/logs/task-metrics.log\"",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "description": "Verify task completion - tests run and build succeeded",
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "TASK COMPLETION VERIFICATION:\n\nBefore finalizing, confirm:\n1. Have all requested tasks been completed?\n2. Were tests run and do they pass?\n3. Did the build succeed (if applicable)?\n4. Are there any pending items or blockers?\n5. Is the code ready for review/merge?\n\nProvide a completion status summary.",
+            "timeout": 60000
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "description": "Validate subagent quality and completeness",
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "SUBAGENT QUALITY VALIDATION:\n\nReview the subagent's work:\n1. Was the delegated task fully completed?\n2. Is the output quality acceptable?\n3. Were all requirements addressed?\n4. Are there any errors or issues to resolve?\n5. Should any work be revised or extended?\n\nProvide quality assessment and recommendations.",
+            "timeout": 60000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "description": "Load project context and set environment variables",
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/load-context.sh",
+            "timeout": 30000
+          }
+        ]
+      }
+    ]
+  }
+}
